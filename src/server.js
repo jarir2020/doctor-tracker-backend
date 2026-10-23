@@ -1,10 +1,9 @@
-/** Doctor Tracker: Connects to MongoDB, starts the HTTP server, and handles process shutdown. */
+/** Doctor Tracker: Starts the local HTTP server and handles process shutdown. */
 import "dotenv/config";
 import app from "./app.js";
 import { env } from "./config/env.js";
-import { connectDatabase, disconnectDatabase } from "./config/database.js";
+import { disconnectDatabase } from "./config/database.js";
 
-await connectDatabase();
 const server = app.listen(env.port, env.host, () => {
   console.info(`Doctor Tracker API listening on ${env.host}:${env.port}`);
 });

@@ -31,7 +31,7 @@ List responses include `items` and `pagination` with page, limit, total, and tot
 
 ## Deployment
 
-Deploy this repository as a separate Vercel project for the Express API. Vercel detects Express at `src/server.js` and runs the application as a Vercel Function; the current `app.listen` startup pattern is supported ([Express on Vercel](https://vercel.com/docs/frameworks/backend/express)).
+Deploy this repository as a separate Vercel project for the Express API. Vercel loads `src/app.js` as the Express Function entry point; that module connects to MongoDB before serving requests. The local `src/server.js` uses `app.listen` for development ([Express on Vercel](https://vercel.com/docs/frameworks/backend/express)).
 
 Set these values in the backend project's Production environment:
 

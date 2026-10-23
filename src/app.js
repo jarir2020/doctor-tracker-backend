@@ -7,6 +7,7 @@ import session from "express-session";
 import MongoStore from "connect-mongo";
 import morgan from "morgan";
 import { env } from "./config/env.js";
+import { connectDatabase } from "./config/database.js";
 import { verifyOrigin } from "./middleware/verifyOrigin.js";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 import authRoutes from "./routes/auth.routes.js";
@@ -16,6 +17,9 @@ import dashboardRoutes from "./routes/dashboard.routes.js";
 import mongoose from "mongoose";
 
 const app = express();
+
+// Vercel loads this module as the Express entry point, so connect before handling API requests.
+await connectDatabase();
 
 if (env.isProduction) app.set("trust proxy", 1);
 
