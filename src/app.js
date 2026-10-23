@@ -43,7 +43,13 @@ app.use(session({
   secret: env.sessionSecret,
   resave: false,
   saveUninitialized: false,
-  store: MongoStore.create({ mongoUrl: env.mongoUri, collectionName: "sessions", ttl: env.sessionMaxAgeMs / 1000 }),
+  // Reuse Mongoose's connected client to avoid opening a second Atlas connection for sessions.
+  store: MongoStore.create({
+    client: mongoose.connection.getClient(),
+    dbName: mongoose.connection.name,
+    collectionName: "sessions",
+    ttl: env.sessionMaxAgeMs / 1000,
+  }),
   cookie: {
     httpOnly: true,
     secure: env.isProduction,
