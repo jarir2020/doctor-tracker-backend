@@ -31,22 +31,22 @@ List responses include `items` and `pagination` with page, limit, total, and tot
 
 ## Deployment
 
-This repository includes a `render.yaml` Blueprint for a Node.js Web Service. In Render, create a Blueprint from this repository and use its `main` branch. The Blueprint sets `npm ci`, `npm start`, `/api/health`, and the Free plan; Render supplies `PORT`.
+Deploy this repository as a separate Vercel project for the Express API. Vercel detects Express at `src/server.js` and runs the application as a Vercel Function; the current `app.listen` startup pattern is supported ([Express on Vercel](https://vercel.com/docs/frameworks/backend/express)).
 
-Set these values during Blueprint setup or in the Render service environment:
+Set these values in the backend project's Production environment:
 
 | Variable | Value |
 |---|---|
 | `MONGODB_URI` | The Atlas connection string for the demo database. |
-| `SESSION_SECRET` | Generated automatically by the Blueprint. |
-| `FRONTEND_ORIGINS` | The exact deployed Vercel origin, with no trailing slash. Update it after the frontend deploy. |
+| `SESSION_SECRET` | A unique random secret. |
+| `FRONTEND_ORIGINS` | The exact deployed frontend origin, with no trailing slash. Set it after the frontend deploy. |
 | `ADMIN_EMAIL` | The demo administrator email. |
 | `ADMIN_PASSWORD` | A demo password of at least 12 characters. |
-| `ADMIN_NAME` | Defaults to `Doctor Tracker Demo Admin`. |
-| `NODE_ENV` | Set to `production` by the Blueprint. |
+| `ADMIN_NAME` | `Doctor Tracker Demo Admin` or another demo display name. |
+| `NODE_ENV` | `production` |
 
-The `MONGODB_URI`, `FRONTEND_ORIGINS`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` values are intentionally not stored in `render.yaml`. Keep them in Render's environment settings and keep `.env` out of Git. After setting the Render environment, seed the demo administrator from a trusted local checkout with the same Atlas URI and admin settings in `backend/.env` by running `npm run seed:admin`.
+Keep credentials in Vercel's environment settings and keep `.env` out of Git. Seed the demo administrator from a trusted local checkout with the same Atlas URI and admin settings in `backend/.env` by running `npm run seed:admin`.
 
-The Render Free plan is suitable for this demonstration, but it spins down after 15 minutes without traffic and can take about a minute to wake. Use synthetic records only; do not put real patient information in the demo database.
+Vercel Hobby is suitable for a small personal demonstration within its function limits. Its outbound IPs are dynamic; stable egress IPs require the paid Static IP feature. The Atlas IP access list must allow the backend to connect. For a disposable demo, a temporary allow-from-anywhere entry can work, but use a unique database password and remove the broad entry when it is no longer needed ([Vercel outbound IP guidance](https://vercel.com/kb/guide/can-i-get-a-fixed-ip-address), [Atlas connectivity troubleshooting](https://www.mongodb.com/docs/manual/troubleshooting/server-selection-timeout/)). Use synthetic records only; do not put real patient information in the demo database.
 
 See the frontend repository README for the complete application architecture, user-facing screenshots, and submission URLs.
