@@ -1,3 +1,4 @@
+/** Doctor Tracker: Implements authenticated doctor directory and doctor-linked patient endpoints. */
 import { Router } from "express";
 import mongoose from "mongoose";
 import { Doctor } from "../models/Doctor.js";
@@ -10,6 +11,7 @@ const router = Router();
 router.use(requireAdmin);
 
 function serializeDoctor(doctor) {
+  // Keep MongoDB-specific field names and IDs out of the client-facing response shape.
   return {
     id: doctor._id.toString(),
     name: doctor.name,
@@ -22,6 +24,7 @@ function serializeDoctor(doctor) {
   };
 }
 
+/** Convert a patient document with an optional populated doctor to API data. */
 function serializePatient(patient) {
   const doctor = patient.doctor && typeof patient.doctor === "object" ? patient.doctor : null;
   return {
@@ -37,10 +40,12 @@ function serializePatient(patient) {
   };
 }
 
+/** Reject malformed document IDs before sending them to MongoDB. */
 function validObjectId(value, label) {
   if (!mongoose.isValidObjectId(value)) throw new AppError(400, `${label} is invalid.`, "INVALID_ID");
 }
 
+// Return a filtered page of doctors and the total needed by the pager.
 router.get("/", async (req, res) => {
   const query = parseListQuery(req.query);
   const filter = {};
@@ -49,6 +54,7 @@ router.get("/", async (req, res) => {
   const text = textSearchFilter(query.q);
   if (text) filter.$text = text.$text;
 
+  // Fetch the current page and result count together for pagination metadata.
   const [records, total] = await Promise.all([
     Doctor.find(filter)
       .sort({ createdAt: -1, _id: -1 })
@@ -67,17 +73,21 @@ router.get("/", async (req, res) => {
   });
 });
 
+// Validate and create one doctor record.
 router.post("/", async (req, res) => {
   const values = parseBody(doctorBody, req.body);
+  // Store a normalized key for case-insensitive specialty filtering.
   const doctor = await Doctor.create({ ...values, specializationKey: values.specialization.toLowerCase() });
   res.status(201).json({ success: true, data: { doctor: serializeDoctor(doctor) } });
 });
 
+// Supply the distinct values used by the directory specialty filter.
 router.get("/specializations", async (_req, res) => {
   const specializations = await Doctor.distinct("specialization");
   res.json({ success: true, data: { specializations: specializations.sort((a, b) => a.localeCompare(b)).slice(0, 100) } });
 });
 
+// Return one doctor's filtered, paginated patient records.
 router.get("/:doctorId/patients", async (req, res) => {
   validObjectId(req.params.doctorId, "Doctor ID");
   const doctor = await Doctor.findById(req.params.doctorId).select("_id").lean();
@@ -109,6 +119,7 @@ router.get("/:doctorId/patients", async (req, res) => {
   });
 });
 
+// Create a patient and attach it to the doctor named in the route.
 router.post("/:doctorId/patients", async (req, res) => {
   validObjectId(req.params.doctorId, "Doctor ID");
   const doctor = await Doctor.findById(req.params.doctorId).select("_id").lean();
@@ -124,6 +135,7 @@ router.post("/:doctorId/patients", async (req, res) => {
   res.status(201).json({ success: true, data: { patient: serializePatient(populated) } });
 });
 
+// Delete only when the patient belongs to the doctor in the route.
 router.delete("/:doctorId/patients/:patientId", async (req, res) => {
   validObjectId(req.params.doctorId, "Doctor ID");
   validObjectId(req.params.patientId, "Patient ID");
@@ -132,6 +144,7 @@ router.delete("/:doctorId/patients/:patientId", async (req, res) => {
   res.json({ success: true, data: { deleted: true } });
 });
 
+// Return a single doctor profile by its MongoDB ID.
 router.get("/:doctorId", async (req, res) => {
   validObjectId(req.params.doctorId, "Doctor ID");
   const doctor = await Doctor.findById(req.params.doctorId).lean();

@@ -1,9 +1,12 @@
+/** Doctor Tracker: Converts application and database failures into consistent API responses. */
 import { AppError } from "../utils/AppError.js";
 
+/** Return the common API error shape when no route matches the request. */
 export function notFoundHandler(req, res) {
   res.status(404).json({ success: false, message: "API route not found." });
 }
 
+/** Translate expected validation/database errors and hide unexpected details. */
 export function errorHandler(error, req, res, next) {
   if (res.headersSent) return next(error);
 

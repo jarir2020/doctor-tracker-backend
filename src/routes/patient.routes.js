@@ -1,3 +1,4 @@
+/** Doctor Tracker: Implements authenticated patient search, updates, and deletion endpoints. */
 import { Router } from "express";
 import mongoose from "mongoose";
 import { Doctor } from "../models/Doctor.js";
@@ -9,6 +10,7 @@ import { patientPatchBody, parseBody, parseListQuery, textSearchFilter } from ".
 const router = Router();
 router.use(requireAdmin);
 
+/** Convert a patient document with an optional populated doctor to API data. */
 function serializePatient(patient) {
   const doctor = patient.doctor && typeof patient.doctor === "object" ? patient.doctor : null;
   return {
@@ -24,15 +26,18 @@ function serializePatient(patient) {
   };
 }
 
+/** Reject malformed patient IDs before running a database operation. */
 function validObjectId(value) {
   if (!mongoose.isValidObjectId(value)) throw new AppError(400, "Patient ID is invalid.", "INVALID_ID");
 }
 
+// Supply condition values for the patient directory filter.
 router.get("/conditions", async (req, res) => {
   const values = await Patient.distinct("condition");
   res.json({ success: true, data: { conditions: values.sort((a, b) => a.localeCompare(b)).slice(0, 100) } });
 });
 
+// Return filtered patient records with their doctor names and paging totals.
 router.get("/", async (req, res) => {
   const query = parseListQuery(req.query);
   const filter = {};
@@ -62,12 +67,15 @@ router.get("/", async (req, res) => {
   });
 });
 
+// Apply only validated fields, including an optional reassignment to another doctor.
 router.patch("/:patientId", async (req, res) => {
   validObjectId(req.params.patientId);
   const values = parseBody(patientPatchBody, req.body);
+  // Keep the searchable normalized key in sync when a condition is edited.
   if (values.condition) values.conditionKey = values.condition.toLowerCase();
 
   if (values.doctorId) {
+    // Verify the doctor exists before translating the public ID to a database reference.
     const doctor = await Doctor.findById(values.doctorId).select("_id").lean();
     if (!doctor) throw new AppError(404, "Doctor not found.", "DOCTOR_NOT_FOUND");
     values.doctor = doctor._id;
@@ -83,6 +91,7 @@ router.patch("/:patientId", async (req, res) => {
   res.json({ success: true, data: { patient: serializePatient(patient) } });
 });
 
+// Remove a patient record by ID after validating the identifier.
 router.delete("/:patientId", async (req, res) => {
   validObjectId(req.params.patientId);
   const patient = await Patient.findByIdAndDelete(req.params.patientId).lean();

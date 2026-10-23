@@ -1,3 +1,4 @@
+/** Doctor Tracker: Aggregates record totals, six-month trends, and patients per doctor. */
 import { Router } from "express";
 import { Doctor } from "../models/Doctor.js";
 import { Patient } from "../models/Patient.js";
@@ -7,6 +8,7 @@ const router = Router();
 router.use(requireAdmin);
 
 function sixMonthBuckets(now) {
+  // Build UTC month keys first so months with no records still appear as zeroes.
   return Array.from({ length: 6 }, (_, index) => {
     const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 5 + index, 1));
     const month = date.toISOString().slice(0, 7);
@@ -19,11 +21,13 @@ function sixMonthBuckets(now) {
   });
 }
 
+// Produce a single summary payload for dashboard cards and charts.
 router.get("/summary", async (req, res) => {
   const now = new Date();
   const months = sixMonthBuckets(now);
   const start = new Date(`${months[0].month}-01T00:00:00.000Z`);
 
+  // Run independent counts and aggregations together to reduce dashboard latency.
   const [doctorTotal, patientTotal, doctorTrend, patientTrend, patientsPerDoctor] = await Promise.all([
     Doctor.countDocuments(),
     Patient.countDocuments(),

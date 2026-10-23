@@ -1,3 +1,4 @@
+/** Doctor Tracker: Connects to MongoDB, starts the HTTP server, and handles process shutdown. */
 import "dotenv/config";
 import app from "./app.js";
 import { env } from "./config/env.js";
@@ -8,6 +9,7 @@ const server = app.listen(env.port, env.host, () => {
   console.info(`Doctor Tracker API listening on ${env.host}:${env.port}`);
 });
 
+/** Stop accepting requests before closing the shared database connection. */
 async function shutdown(signal) {
   console.info(`${signal} received; shutting down`);
   server.close(async () => {

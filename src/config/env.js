@@ -1,3 +1,4 @@
+/** Doctor Tracker: Normalizes environment settings and applies safe session-secret defaults. */
 import "dotenv/config";
 
 const nodeEnv = process.env.NODE_ENV || "development";
@@ -10,6 +11,7 @@ const frontendOrigins = rawOrigins
 
 const sessionSecret = process.env.SESSION_SECRET || (nodeEnv === "production" ? "" : "local-development-session-secret-change-me");
 
+// Local demos can start without extra setup; hosted environments must provide a secret.
 if (!sessionSecret) {
   throw new Error("SESSION_SECRET must be set in production.");
 }

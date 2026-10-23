@@ -1,5 +1,7 @@
+/** Doctor Tracker: Defines doctor records and indexes used for uniqueness, sorting, and search. */
 import mongoose from "mongoose";
 
+// Store a normalized specialty key separately for indexed case-insensitive filters.
 const doctorSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true, maxlength: 100 },
@@ -12,6 +14,7 @@ const doctorSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+// These indexes support uniqueness, newest-first lists, filtering, and text search.
 doctorSchema.index({ email: 1 }, { unique: true });
 doctorSchema.index({ createdAt: -1, _id: -1 });
 doctorSchema.index({ specializationKey: 1, createdAt: -1 });

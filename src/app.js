@@ -1,3 +1,4 @@
+/** Doctor Tracker: Configures Express middleware, session storage, health checks, and API routes. */
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
@@ -18,6 +19,7 @@ const app = express();
 
 if (env.isProduction) app.set("trust proxy", 1);
 
+// Apply security, origin checks, and persistent sessions before registering route handlers.
 app.use(helmet());
 app.use(cors({
   origin(origin, callback) {
@@ -48,6 +50,7 @@ app.use(session({
 }));
 
 app.get("/api/health", (_req, res) => {
+  // Report database readiness so callers can distinguish a running API from a ready API.
   const connected = mongoose.connection.readyState === 1;
   res.status(connected ? 200 : 503).json({
     success: connected,

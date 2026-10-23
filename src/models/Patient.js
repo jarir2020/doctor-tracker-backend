@@ -1,5 +1,7 @@
+/** Doctor Tracker: Defines patient records, doctor relationships, and common query indexes. */
 import mongoose from "mongoose";
 
+// Each patient belongs to a doctor and carries a normalized condition filter key.
 const patientSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true, maxlength: 100 },
@@ -13,6 +15,7 @@ const patientSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+// Compound indexes match the common doctor-scoped and newest-first list queries.
 patientSchema.index({ doctor: 1, createdAt: -1, _id: -1 });
 patientSchema.index({ conditionKey: 1, createdAt: -1 });
 patientSchema.index({ createdAt: -1, _id: -1 });

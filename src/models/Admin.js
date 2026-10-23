@@ -1,5 +1,7 @@
+/** Doctor Tracker: Defines the administrator document and protects password hashes from queries. */
 import mongoose from "mongoose";
 
+// Password hashes stay excluded unless authentication explicitly requests them.
 const adminSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true, maxlength: 100 },

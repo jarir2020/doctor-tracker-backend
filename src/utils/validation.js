@@ -1,6 +1,8 @@
+/** Doctor Tracker: Validates request bodies and list filters before building database queries. */
 import { z } from "zod";
 import { AppError } from "./AppError.js";
 
+// Reuse one trimmed, required string rule with field-specific length messages.
 const trimmedText = (max, label) =>
   z.string().trim().min(1, `${label} is required.`).max(max, `${label} must be ${max} characters or fewer.`);
 
@@ -44,6 +46,7 @@ const listQuerySchema = z.object({
   doctorId: z.string().optional(),
 });
 
+/** Parse a strict calendar date in UTC and reject rollover dates like February 31. */
 function validDate(value) {
   if (!value) return undefined;
   const parsed = new Date(`${value}T00:00:00.000Z`);
@@ -53,6 +56,7 @@ function validDate(value) {
   return parsed;
 }
 
+/** Validate a request body and turn the first set of schema issues into an API error. */
 export function parseBody(schema, body) {
   const result = schema.safeParse(body);
   if (!result.success) {
@@ -62,6 +66,7 @@ export function parseBody(schema, body) {
   return result.data;
 }
 
+/** Normalize search, filters, dates, and pagination for list endpoints. */
 export function parseListQuery(query) {
   const result = listQuerySchema.safeParse(query);
   if (!result.success) {
@@ -81,6 +86,7 @@ export function parseListQuery(query) {
   const createdAt = {};
   if (fromDate) createdAt.$gte = fromDate;
   if (toDate) {
+    // Convert the inclusive calendar date into an exclusive next-day boundary.
     const exclusiveEnd = new Date(toDate);
     exclusiveEnd.setUTCDate(exclusiveEnd.getUTCDate() + 1);
     createdAt.$lt = exclusiveEnd;
@@ -96,6 +102,7 @@ export function parseListQuery(query) {
   };
 }
 
+/** Strip unsupported punctuation before creating a MongoDB text-search condition. */
 export function textSearchFilter(q) {
   if (!q) return null;
   const terms = q.replace(/[^\p{L}\p{N}@._+-]+/gu, " ").trim();
